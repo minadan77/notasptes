@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
     const taskInput = document.getElementById('taskInput');
-    const addTaskBtn = document.getElementById('addTask');
     const taskList = document.getElementById('taskList');
     const priorityCircles = document.querySelectorAll('.priority-circle');
 
@@ -11,12 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
             priorityCircles.forEach(c => c.classList.remove('selected'));
             circle.classList.add('selected');
             selectedPriority = circle.getAttribute('data-priority');
+            addTask();
         });
-    });
-
-    addTaskBtn.addEventListener('click', addTask);
-    taskInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') addTask();
     });
 
     function addTask() {
