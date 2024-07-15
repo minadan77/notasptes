@@ -3,172 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Tareas Minimalista</title>
+    <title>Tareas Pendientes</title>
     <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --card-color: #16213e;
+            --text-color: #e0e0e0;
+            --priority-high: #ff6b6b;
+            --priority-medium: #ffa502;
+            --priority-low: #ffdd59;
+            --accent-color: #4bcffa;
+        }
+
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #f5f5f5;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            padding: 0;
         }
-        .container {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 20px;
-            width: 100%;
-            max-width: 400px;
+
+        .app-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 1rem;
         }
+
         h1 {
-            color: #333;
-            font-size: 24px;
-            margin-bottom: 20px;
             text-align: center;
+            color: var(--accent-color);
         }
-        #task-input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            font-size: 16px;
+
+        .task-input {
+            display: flex;
+            margin-bottom: 1rem;
         }
-        #add-task {
-            width: 100%;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
+
+        #taskInput {
+            flex-grow: 1;
+            padding: 0.5rem;
             border: none;
-            border-radius: 4px;
+            border-radius: 4px 0 0 4px;
+            background-color: var(--card-color);
+            color: var(--text-color);
+        }
+
+        .priority-selector {
+            display: flex;
+            background-color: var(--card-color);
+            padding: 0.5rem;
+        }
+
+        .priority-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin: 0 5px;
             cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
+            opacity: 0.6;
+            transition: opacity 0.3s;
         }
-        #add-task:hover {
-            background-color: #45a049;
+
+        .priority-circle[data-priority="high"] { background-color: var(--priority-high); }
+        .priority-circle[data-priority="medium"] { background-color: var(--priority-medium); }
+        .priority-circle[data-priority="low"] { background-color: var(--priority-low); }
+
+        .priority-circle.selected {
+            opacity: 1;
         }
-        #task-list {
+
+        #addTask {
+            padding: 0.5rem 1rem;
+            border: none;
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            cursor: pointer;
+            border-radius: 0 4px 4px 0;
+        }
+
+        #taskList {
             list-style-type: none;
             padding: 0;
         }
+
         .task-item {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            padding: 10px;
-            background-color: #f9f9f9;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
             border-radius: 4px;
-            margin-bottom: 5px;
-            transition: background-color 0.3s;
+            background-color: var(--card-color);
         }
-        .task-item:hover {
-            background-color: #f0f0f0;
-        }
-        .task-text {
-            flex-grow: 1;
-            margin-left: 10px;
-        }
-        .delete-task {
-            background-color: #ff4d4d;
-            color: white;
+
+        .delete-btn {
+            background: none;
             border: none;
-            border-radius: 4px;
-            padding: 5px 10px;
+            color: var(--priority-high);
+            font-size: 1.2rem;
             cursor: pointer;
-            font-size: 14px;
-            transition: background-color 0.3s;
         }
-        .delete-task:hover {
-            background-color: #ff3333;
-        }
-        .completed {
-            text-decoration: line-through;
-            color: #888;
-        }
+
+        .task-item[data-priority="high"] { background-color: rgba(255, 107, 107, 0.2); }
+        .task-item[data-priority="medium"] { background-color: rgba(255, 165, 2, 0.2); }
+        .task-item[data-priority="low"] { background-color: rgba(255, 221, 89, 0.2); }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Lista de Tareas</h1>
-        <input type="text" id="task-input" placeholder="Añadir una nueva tarea">
-        <button id="add-task">Añadir Tarea</button>
-        <ul id="task-list"></ul>
+    <div class="app-container">
+        <h1>Tareas Pendientes</h1>
+        <div class="task-input">
+            <input type="text" id="taskInput" placeholder="Nueva tarea...">
+            <div class="priority-selector">
+                <div class="priority-circle" data-priority="high"></div>
+                <div class="priority-circle" data-priority="medium"></div>
+                <div class="priority-circle" data-priority="low"></div>
+            </div>
+            <button id="addTask">Añadir</button>
+        </div>
+        <ul id="taskList"></ul>
     </div>
-
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const taskInput = document.getElementById('task-input');
-            const addTaskButton = document.getElementById('add-task');
-            const taskList = document.getElementById('task-list');
+            const taskInput = document.getElementById('taskInput');
+            const addTaskBtn = document.getElementById('addTask');
+            const taskList = document.getElementById('taskList');
+            const priorityCircles = document.querySelectorAll('.priority-circle');
 
-            // Cargar tareas guardadas
-            const savedTasks = JSON.parse(localStorage.getItem('tasks')) || [];
-            savedTasks.forEach(task => addTaskToDOM(task));
+            let selectedPriority = null;
 
-            addTaskButton.addEventListener('click', () => {
-                const taskText = taskInput.value.trim();
-                if (taskText) {
-                    addTask(taskText);
-                    taskInput.value = '';
-                }
+            priorityCircles.forEach(circle => {
+                circle.addEventListener('click', () => {
+                    priorityCircles.forEach(c => c.classList.remove('selected'));
+                    circle.classList.add('selected');
+                    selectedPriority = circle.getAttribute('data-priority');
+                });
             });
 
+            addTaskBtn.addEventListener('click', addTask);
             taskInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    addTaskButton.click();
-                }
+                if (e.key === 'Enter') addTask();
             });
 
-            function addTask(text) {
-                const task = { text, completed: false };
-                savedTasks.push(task);
-                saveTasks();
-                addTaskToDOM(task);
-            }
-
-            function addTaskToDOM(task) {
-                const li = document.createElement('li');
-                li.className = 'task-item';
-                
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.checked = task.completed;
-                checkbox.addEventListener('change', () => {
-                    task.completed = checkbox.checked;
-                    taskText.classList.toggle('completed', task.completed);
-                    saveTasks();
-                });
-
-                const taskText = document.createElement('span');
-                taskText.className = 'task-text';
-                taskText.textContent = task.text;
-                if (task.completed) {
-                    taskText.classList.add('completed');
+            function addTask() {
+                const taskText = taskInput.value.trim();
+                if (taskText && selectedPriority) {
+                    const li = document.createElement('li');
+                    li.className = 'task-item';
+                    li.setAttribute('data-priority', selectedPriority);
+                    li.innerHTML = `
+                        <span>${taskText}</span>
+                        <button class="delete-btn">×</button>
+                    `;
+                    li.querySelector('.delete-btn').addEventListener('click', () => {
+                        li.remove();
+                        updateTaskOrder();
+                    });
+                    taskList.appendChild(li);
+                    taskInput.value = '';
+                    selectedPriority = null;
+                    priorityCircles.forEach(c => c.classList.remove('selected'));
+                    updateTaskOrder();
                 }
-
-                const deleteButton = document.createElement('button');
-                deleteButton.className = 'delete-task';
-                deleteButton.textContent = 'Eliminar';
-                deleteButton.addEventListener('click', () => {
-                    li.remove();
-                    const index = savedTasks.indexOf(task);
-                    if (index > -1) {
-                        savedTasks.splice(index, 1);
-                        saveTasks();
-                    }
-                });
-
-                li.appendChild(checkbox);
-                li.appendChild(taskText);
-                li.appendChild(deleteButton);
-                taskList.appendChild(li);
             }
 
-            function saveTasks() {
-                localStorage.setItem('tasks', JSON.stringify(savedTasks));
+            function updateTaskOrder() {
+                const tasks = Array.from(taskList.children);
+                tasks.sort((a, b) => {
+                    const priorityOrder = { high: 1, medium: 2, low: 3 };
+                    return priorityOrder[a.getAttribute('data-priority')] - priorityOrder[b.getAttribute('data-priority')];
+                });
+                taskList.innerHTML = '';
+                tasks.forEach(task => taskList.appendChild(task));
             }
         });
     </script>
