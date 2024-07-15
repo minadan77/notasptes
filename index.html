@@ -4,110 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tareas Pendientes</title>
-    <style>
-        :root {
-            --bg-color: #1a1a2e;
-            --card-color: #16213e;
-            --text-color: #e0e0e0;
-            --priority-high: #ff6b6b;
-            --priority-medium: #ffa502;
-            --priority-low: #ffdd59;
-            --accent-color: #4bcffa;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 0;
-        }
-
-        .app-container {
-            max-width: 600px;
-            margin: 2rem auto;
-            padding: 1rem;
-        }
-
-        h1 {
-            text-align: center;
-            color: var(--accent-color);
-        }
-
-        .task-input {
-            display: flex;
-            margin-bottom: 1rem;
-        }
-
-        #taskInput {
-            flex-grow: 1;
-            padding: 0.5rem;
-            border: none;
-            border-radius: 4px 0 0 4px;
-            background-color: var(--card-color);
-            color: var(--text-color);
-        }
-
-        .priority-selector {
-            display: flex;
-            background-color: var(--card-color);
-            padding: 0.5rem;
-        }
-
-        .priority-circle {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            margin: 0 5px;
-            cursor: pointer;
-            opacity: 0.6;
-            transition: opacity 0.3s;
-        }
-
-        .priority-circle[data-priority="high"] { background-color: var(--priority-high); }
-        .priority-circle[data-priority="medium"] { background-color: var(--priority-medium); }
-        .priority-circle[data-priority="low"] { background-color: var(--priority-low); }
-
-        .priority-circle.selected {
-            opacity: 1;
-        }
-
-        #addTask {
-            padding: 0.5rem 1rem;
-            border: none;
-            background-color: var(--accent-color);
-            color: var(--bg-color);
-            cursor: pointer;
-            border-radius: 0 4px 4px 0;
-        }
-
-        #taskList {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        .task-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            margin-bottom: 0.5rem;
-            border-radius: 4px;
-            background-color: var(--card-color);
-        }
-
-        .delete-btn {
-            background: none;
-            border: none;
-            color: var(--priority-high);
-            font-size: 1.2rem;
-            cursor: pointer;
-        }
-
-        .task-item[data-priority="high"] { background-color: rgba(255, 107, 107, 0.2); }
-        .task-item[data-priority="medium"] { background-color: rgba(255, 165, 2, 0.2); }
-        .task-item[data-priority="low"] { background-color: rgba(255, 221, 89, 0.2); }
-    </style>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icon-192x192.svg">
 </head>
 <body>
     <div class="app-container">
@@ -119,64 +18,12 @@
                 <div class="priority-circle" data-priority="medium"></div>
                 <div class="priority-circle" data-priority="low"></div>
             </div>
-            <button id="addTask">Añadir</button>
         </div>
         <ul id="taskList"></ul>
     </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const taskInput = document.getElementById('taskInput');
-            const addTaskBtn = document.getElementById('addTask');
-            const taskList = document.getElementById('taskList');
-            const priorityCircles = document.querySelectorAll('.priority-circle');
-
-            let selectedPriority = null;
-
-            priorityCircles.forEach(circle => {
-                circle.addEventListener('click', () => {
-                    priorityCircles.forEach(c => c.classList.remove('selected'));
-                    circle.classList.add('selected');
-                    selectedPriority = circle.getAttribute('data-priority');
-                });
-            });
-
-            addTaskBtn.addEventListener('click', addTask);
-            taskInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') addTask();
-            });
-
-            function addTask() {
-                const taskText = taskInput.value.trim();
-                if (taskText && selectedPriority) {
-                    const li = document.createElement('li');
-                    li.className = 'task-item';
-                    li.setAttribute('data-priority', selectedPriority);
-                    li.innerHTML = `
-                        <span>${taskText}</span>
-                        <button class="delete-btn">×</button>
-                    `;
-                    li.querySelector('.delete-btn').addEventListener('click', () => {
-                        li.remove();
-                        updateTaskOrder();
-                    });
-                    taskList.appendChild(li);
-                    taskInput.value = '';
-                    selectedPriority = null;
-                    priorityCircles.forEach(c => c.classList.remove('selected'));
-                    updateTaskOrder();
-                }
-            }
-
-            function updateTaskOrder() {
-                const tasks = Array.from(taskList.children);
-                tasks.sort((a, b) => {
-                    const priorityOrder = { high: 1, medium: 2, low: 3 };
-                    return priorityOrder[a.getAttribute('data-priority')] - priorityOrder[b.getAttribute('data-priority')];
-                });
-                taskList.innerHTML = '';
-                tasks.forEach(task => taskList.appendChild(task));
-            }
-        });
+    <script src="app.js"></script>
+</body>
+</html>
     </script>
 </body>
 </html>
