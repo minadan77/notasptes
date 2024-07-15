@@ -1,62 +1,62 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const taskInput = document.getElementById('taskInput');
-    const addTaskBtn = document.getElementById('addTask');
-    const taskList = document.getElementById('taskList');
-    const priorityCircles = document.querySelectorAll('.priority-circle');
+const CACHE_NAME = 'tareas-pendientes-v1';
+const urlsToCache = [
+    '/',
+    '/index.html',
+    '/styles.css',
+    '/app.js',
+    '/manifest.json',
+    '/icon-192x192.svg',
+    '/icon-512x512.svg'
+];
 
-    let selectedPriority = null;
-
-    priorityCircles.forEach(circle => {
-        circle.addEventListener('click', () => {
-            priorityCircles.forEach(c => c.classList.remove('selected'));
-            circle.classList.add('selected');
-            selectedPriority = circle.getAttribute('data-priority');
-        });
-    });
-
-    addTaskBtn.addEventListener('click', addTask);
-    taskInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') addTask();
-    });
-
-    function addTask() {
-        const taskText = taskInput.value.trim();
-        if (taskText && selectedPriority) {
-            const li = document.createElement('li');
-            li.className = 'task-item';
-            li.setAttribute('data-priority', selectedPriority);
-            li.innerHTML = `
-                <span>${taskText}</span>
-                <button class="delete-btn">×</button>
-            `;
-            li.querySelector('.delete-btn').addEventListener('click', () => {
-                li.remove();
-                updateTaskOrder();
-            });
-            taskList.appendChild(li);
-            taskInput.value = '';
-            selectedPriority = null;
-            priorityCircles.forEach(c => c.classList.remove('selected'));
-            updateTaskOrder();
-        }
-    }
-
-    function updateTaskOrder() {
-        const tasks = Array.from(taskList.children);
-        tasks.sort((a, b) => {
-            const priorityOrder = { high: 1, medium: 2, low: 3 };
-            return priorityOrder[a.getAttribute('data-priority')] - priorityOrder[b.getAttribute('data-priority')];
-        });
-        taskList.innerHTML = '';
-        tasks.forEach(task => taskList.appendChild(task));
-    }
+self.addEventListener('install', (event) => {
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then((cache) => {
+                console.log('Opened cache');
+                return cache.addAll(urlsToCache);
+            })
+    );
 });
 
-// Service Worker para PWA
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-            .then(reg => console.log('Service worker registered'))
-            .catch(err => console.log('Service worker registration failed:', err));
-    });
-}
+self.addEventListener('fetch', (event) => {
+    event.respondWith(
+        caches.match(event.request)
+            .then((response) => {
+                if (response) {
+                    return response;
+                }
+                return fetch(event.request).then(
+                    (response) => {
+                        if(!response || response.status !== 200 || response.type !== 'basic') {
+                            return response;
+                        }
+
+                        const responseToCache = response.clone();
+
+                        caches.open(CACHE_NAME)
+                            .then((cache) => {
+                                cache.put(event.request, responseToCache);
+                            });
+
+                        return response;
+                    }
+                );
+            })
+    );
+});
+
+self.addEventListener('activate', (event) => {
+    const cacheWhitelist = [CACHE_NAME];
+    event.waitUntil(
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cacheName) => {
+                    if (cacheWhitelist.indexOf(cacheName) === -1) {
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        })
+    );
+});
