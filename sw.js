@@ -1,21 +1,62 @@
-const CACHE_NAME = 'todo-app-v1';
-const urlsToCache = [
-    '/',
-    '/index.html',
-    '/icon-192x192.png',
-    '/icon-512x512.png'
-];
+document.addEventListener('DOMContentLoaded', () => {
+    const taskInput = document.getElementById('taskInput');
+    const addTaskBtn = document.getElementById('addTask');
+    const taskList = document.getElementById('taskList');
+    const priorityCircles = document.querySelectorAll('.priority-circle');
 
-self.addEventListener('install', event => {
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(urlsToCache))
-    );
+    let selectedPriority = null;
+
+    priorityCircles.forEach(circle => {
+        circle.addEventListener('click', () => {
+            priorityCircles.forEach(c => c.classList.remove('selected'));
+            circle.classList.add('selected');
+            selectedPriority = circle.getAttribute('data-priority');
+        });
+    });
+
+    addTaskBtn.addEventListener('click', addTask);
+    taskInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') addTask();
+    });
+
+    function addTask() {
+        const taskText = taskInput.value.trim();
+        if (taskText && selectedPriority) {
+            const li = document.createElement('li');
+            li.className = 'task-item';
+            li.setAttribute('data-priority', selectedPriority);
+            li.innerHTML = `
+                <span>${taskText}</span>
+                <button class="delete-btn">×</button>
+            `;
+            li.querySelector('.delete-btn').addEventListener('click', () => {
+                li.remove();
+                updateTaskOrder();
+            });
+            taskList.appendChild(li);
+            taskInput.value = '';
+            selectedPriority = null;
+            priorityCircles.forEach(c => c.classList.remove('selected'));
+            updateTaskOrder();
+        }
+    }
+
+    function updateTaskOrder() {
+        const tasks = Array.from(taskList.children);
+        tasks.sort((a, b) => {
+            const priorityOrder = { high: 1, medium: 2, low: 3 };
+            return priorityOrder[a.getAttribute('data-priority')] - priorityOrder[b.getAttribute('data-priority')];
+        });
+        taskList.innerHTML = '';
+        tasks.forEach(task => taskList.appendChild(task));
+    }
 });
 
-self.addEventListener('fetch', event => {
-    event.respondWith(
-        caches.match(event.request)
-            .then(response => response || fetch(event.request))
-    );
-});
+// Service Worker para PWA
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+            .then(reg => console.log('Service worker registered'))
+            .catch(err => console.log('Service worker registration failed:', err));
+    });
+}
