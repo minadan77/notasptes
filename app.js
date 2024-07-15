@@ -1,57 +1,66 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const taskInput = document.getElementById('taskInput');
-    const taskList = document.getElementById('taskList');
-    const priorityCircles = document.querySelectorAll('.priority-circle');
+    const taskForm = document.getElementById('task-form');
+    const newTaskInput = document.getElementById('new-task');
+    const taskList = document.getElementById('task-list');
+    const priorityButtons = document.querySelectorAll('.priority-btn');
 
     let selectedPriority = null;
 
-    priorityCircles.forEach(circle => {
-        circle.addEventListener('click', () => {
-            priorityCircles.forEach(c => c.classList.remove('selected'));
-            circle.classList.add('selected');
-            selectedPriority = circle.getAttribute('data-priority');
+    priorityButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            selectedPriority = button.dataset.priority;
             addTask();
         });
     });
 
     function addTask() {
-        const taskText = taskInput.value.trim();
+        const taskText = newTaskInput.value.trim();
         if (taskText && selectedPriority) {
-            const li = document.createElement('li');
-            li.className = 'task-item';
-            li.setAttribute('data-priority', selectedPriority);
-            li.innerHTML = `
-                <span>${taskText}</span>
-                <button class="delete-btn">×</button>
-            `;
-            li.querySelector('.delete-btn').addEventListener('click', () => {
-                li.remove();
-                updateTaskOrder();
-            });
-            taskList.appendChild(li);
-            taskInput.value = '';
+            const taskItem = createTaskElement(taskText, selectedPriority);
+            taskList.appendChild(taskItem);
+            newTaskInput.value = '';
             selectedPriority = null;
-            priorityCircles.forEach(c => c.classList.remove('selected'));
-            updateTaskOrder();
+            saveTasks();
         }
     }
 
-    function updateTaskOrder() {
-        const tasks = Array.from(taskList.children);
-        tasks.sort((a, b) => {
-            const priorityOrder = { high: 1, medium: 2, low: 3 };
-            return priorityOrder[a.getAttribute('data-priority')] - priorityOrder[b.getAttribute('data-priority')];
+    function createTaskElement(text, priority) {
+        const taskItem = document.createElement('div');
+        taskItem.classList.add('task-item');
+        taskItem.setAttribute('data-priority', priority);
+        
+        const taskText = document.createElement('span');
+        taskText.textContent = text;
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'X';
+        deleteBtn.classList.add('delete-btn');
+        deleteBtn.addEventListener('click', () => {
+            taskList.removeChild(taskItem);
+            saveTasks();
         });
-        taskList.innerHTML = '';
-        tasks.forEach(task => taskList.appendChild(task));
+        
+        taskItem.appendChild(taskText);
+        taskItem.appendChild(deleteBtn);
+        
+        return taskItem;
     }
-});
 
-// Registro del Service Worker
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('Service worker registered'))
-            .catch(err => console.log('Service worker registration failed:', err));
-    });
-}
+    function saveTasks() {
+        const tasks = Array.from(taskList.children).map(taskItem => ({
+            text: taskItem.querySelector('span').textContent,
+            priority: taskItem.dataset.priority
+        }));
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    function loadTasks() {
+        const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        tasks.forEach(task => {
+            const taskItem = createTaskElement(task.text, task.priority);
+            taskList.appendChild(taskItem);
+        });
+    }
+
+    loadTasks();
+});
