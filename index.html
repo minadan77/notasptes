@@ -6,24 +6,27 @@
     <title>Tareas Pendientes</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/svg+xml" href="icon-192x192.svg">
+    <meta name="theme-color" content="#1a1a2e">
 </head>
 <body>
-    <div class="app-container">
-        <h1>Tareas Pendientes</h1>
-        <div class="task-input">
-            <input type="text" id="taskInput" placeholder="Nueva tarea...">
-            <div class="priority-selector">
-                <div class="priority-circle" data-priority="high"></div>
-                <div class="priority-circle" data-priority="medium"></div>
-                <div class="priority-circle" data-priority="low"></div>
-            </div>
+    <h1>Tareas Pendientes</h1>
+    <form id="task-form">
+        <input type="text" id="new-task" placeholder="Nueva tarea" required>
+        <div id="priority-buttons">
+            <button type="button" id="priority-high" class="priority-btn" data-priority="high"></button>
+            <button type="button" id="priority-medium" class="priority-btn" data-priority="medium"></button>
+            <button type="button" id="priority-low" class="priority-btn" data-priority="low"></button>
         </div>
-        <ul id="taskList"></ul>
-    </div>
+    </form>
+    <div id="task-list"></div>
+    
     <script src="app.js"></script>
-</body>
-</html>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then((reg) => console.log('Service worker registered', reg))
+                .catch((err) => console.log('Service worker not registered', err));
+        }
     </script>
 </body>
 </html>
