@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const taskText = newTaskInput.value.trim();
         if (taskText && selectedPriority) {
             const taskItem = createTaskElement(taskText, selectedPriority);
-            taskList.appendChild(taskItem);
+            insertTaskInOrder(taskItem);
             newTaskInput.value = '';
             selectedPriority = null;
             saveTasks();
@@ -46,6 +46,31 @@ document.addEventListener('DOMContentLoaded', () => {
         return taskItem;
     }
 
+    function insertTaskInOrder(taskItem) {
+        const priority = taskItem.getAttribute('data-priority');
+        const tasks = Array.from(taskList.children);
+        
+        const insertIndex = tasks.findIndex(task => {
+            const taskPriority = task.getAttribute('data-priority');
+            return getPriorityOrder(priority) < getPriorityOrder(taskPriority);
+        });
+
+        if (insertIndex === -1) {
+            taskList.appendChild(taskItem);
+        } else {
+            taskList.insertBefore(taskItem, tasks[insertIndex]);
+        }
+    }
+
+    function getPriorityOrder(priority) {
+        switch(priority) {
+            case 'high': return 1;
+            case 'medium': return 2;
+            case 'low': return 3;
+            default: return 4;
+        }
+    }
+
     function saveTasks() {
         const tasks = Array.from(taskList.children).map(taskItem => ({
             text: taskItem.querySelector('span').textContent,
@@ -56,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function loadTasks() {
         const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        tasks.sort((a, b) => getPriorityOrder(a.priority) - getPriorityOrder(b.priority));
         tasks.forEach(task => {
             const taskItem = createTaskElement(task.text, task.priority);
             taskList.appendChild(taskItem);
