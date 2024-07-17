@@ -7,15 +7,17 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1a1a2e">
+    <link rel="icon" href="icon-192x192.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icon-192x192.svg">
 </head>
 <body>
     <h1>Tareas Pendientes</h1>
     <form id="task-form">
         <input type="text" id="new-task" placeholder="Nueva tarea" required>
         <div id="priority-buttons">
-            <button type="button" id="priority-high" class="priority-btn" data-priority="high"></button>
-            <button type="button" id="priority-medium" class="priority-btn" data-priority="medium"></button>
-            <button type="button" id="priority-low" class="priority-btn" data-priority="low"></button>
+            <button type="button" id="priority-high" class="priority-btn" data-priority="high">Alta</button>
+            <button type="button" id="priority-medium" class="priority-btn" data-priority="medium">Media</button>
+            <button type="button" id="priority-low" class="priority-btn" data-priority="low">Baja</button>
         </div>
     </form>
     <div id="task-list"></div>
@@ -24,9 +26,20 @@
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js')
-                .then((reg) => console.log('Service worker registered', reg))
+                .then((reg) => {
+                    console.log('Service worker registered', reg);
+                    reg.update();
+                })
                 .catch((err) => console.log('Service worker not registered', err));
         }
+
+        // Comprobar actualizaciones del Service Worker
+        let refreshing;
+        navigator.serviceWorker.addEventListener('controllerchange', function() {
+            if (refreshing) return;
+            window.location.reload();
+            refreshing = true;
+        });
     </script>
 </body>
 </html>
