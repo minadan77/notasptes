@@ -4,73 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tareas Pendientes</title>
+    <link rel="stylesheet" href="styles.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1a1a2e">
     <link rel="icon" href="icon-192x192.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="icon-192x192.svg">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f0f0f0;
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-        }
-        #task-form {
-            margin-bottom: 20px;
-        }
-        #new-task {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        #priority-buttons {
-            display: flex;
-            justify-content: space-between;
-        }
-        .priority-btn {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        #priority-high { background-color: #ff6b6b; }
-        #priority-medium { background-color: #feca57; }
-        #priority-low { background-color: #48dbfb; }
-        .task-item {
-            background-color: #fff;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 4px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .delete-btn {
-            background-color: #ff6b6b;
-            color: #fff;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .warning {
-            background-color: #ffdddd;
-            border-left: 6px solid #f44336;
-            color: #f44336;
-            margin-top: 20px;
-            padding: 10px;
-            text-align: center;
-            font-weight: bold;
-        }
-    </style>
 </head>
 <body>
     <h1>Tareas Pendientes</h1>
@@ -84,10 +22,6 @@
     </form>
     <div id="task-list"></div>
     
-    <div id="warning" class="warning">
-        Las notas se eliminarán al borrar datos de navegación de Chrome
-    </div>
-
     <script src="app.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
@@ -97,6 +31,23 @@
                     reg.update();
                 })
                 .catch((err) => console.log('Service worker not registered', err));
+        }
+
+        // Comprobar actualizaciones del Service Worker
+        let refreshing;
+        navigator.serviceWorker.addEventListener('controllerchange', function() {
+            if (refreshing) return;
+            window.location.reload();
+            refreshing = true;
+        });
+
+        // Solicitar permiso para notificaciones
+        if ('Notification' in window) {
+            Notification.requestPermission().then(function(result) {
+                if (result === 'granted') {
+                    console.log('Permiso de notificación concedido');
+                }
+            });
         }
     </script>
 </body>
