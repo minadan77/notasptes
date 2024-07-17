@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tareas-pendientes-v1';
+const CACHE_NAME = 'tareas-pendientes-v2';
 const urlsToCache = [
     '/',
     '/index.html',
@@ -31,14 +31,11 @@ self.addEventListener('fetch', (event) => {
                         if(!response || response.status !== 200 || response.type !== 'basic') {
                             return response;
                         }
-
                         const responseToCache = response.clone();
-
                         caches.open(CACHE_NAME)
                             .then((cache) => {
                                 cache.put(event.request, responseToCache);
                             });
-
                         return response;
                     }
                 );
@@ -59,4 +56,11 @@ self.addEventListener('activate', (event) => {
             );
         })
     );
+});
+
+// Agregamos un evento message para manejar la actualización de la caché
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 });
