@@ -9,30 +9,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const priorityButtons = document.querySelectorAll('.priority-btn');
     let selectedPriority = null;
 
-    // Solicitar almacenamiento persistente
-    if (navigator.storage && navigator.storage.persist) {
-        navigator.storage.persist().then(persistent => {
-            if (persistent) {
-                console.log("Almacenamiento persistente concedido");
-            } else {
-                console.log("Almacenamiento persistente no concedido");
-            }
-        });
-    }
-
     // Inicializar IndexedDB
     const request = indexedDB.open(DB_NAME, 1);
 
     request.onerror = (event) => {
         console.error("Error al abrir la base de datos", event.target.error);
-        alert("Error al abrir la base de datos. Por favor, intenta recargar la página.");
     };
 
     request.onsuccess = (event) => {
         db = event.target.result;
-        db.onerror = (event) => {
-            console.error("Error de base de datos: " + event.target.errorCode);
-        };
         loadTasks();
     };
 
@@ -65,7 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             request.onerror = (event) => {
                 console.error("Error al agregar tarea", event.target.error);
-                alert("Error al agregar tarea. Por favor, intenta de nuevo.");
             };
         }
     }
@@ -103,7 +87,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         request.onerror = (event) => {
             console.error("Error al eliminar tarea", event.target.error);
-            alert("Error al eliminar tarea. Por favor, intenta de nuevo.");
         };
     }
 
@@ -133,19 +116,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         request.onerror = (event) => {
             console.error("Error al cargar tareas", event.target.error);
-            alert("Error al cargar tareas. Por favor, recarga la página.");
         };
     }
-
-    // Verificar periódicamente la conexión a la base de datos
-    setInterval(() => {
-        if (!db || db.closed) {
-            console.log("Reconectando a la base de datos...");
-            const request = indexedDB.open(DB_NAME, 1);
-            request.onsuccess = (event) => {
-                db = event.target.result;
-                loadTasks();
-            };
-        }
-    }, 5000);
 });
