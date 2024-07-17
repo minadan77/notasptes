@@ -1,54 +1,73 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tareas Pendientes</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1a1a2e">
-    <link rel="icon" href="icon-192x192.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="icon-192x192.svg">
-</head>
-<body>
-    <h1>Tareas Pendientes</h1>
-    <form id="task-form">
-        <input type="text" id="new-task" placeholder="Nueva tarea" required>
-        <div id="priority-buttons">
-            <button type="button" id="priority-high" class="priority-btn" data-priority="high">Alta</button>
-            <button type="button" id="priority-medium" class="priority-btn" data-priority="medium">Media</button>
-            <button type="button" id="priority-low" class="priority-btn" data-priority="low">Baja</button>
-        </div>
-    </form>
-    <div id="task-list"></div>
-    
-    <script src="app.js"></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
-                .then((reg) => {
-                    console.log('Service worker registered', reg);
-                    reg.update();
-                })
-                .catch((err) => console.log('Service worker not registered', err));
-        }
+body {
+    font-family: Arial, sans-serif;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f0f0f0;
+}
 
-        // Comprobar actualizaciones del Service Worker
-        let refreshing;
-        navigator.serviceWorker.addEventListener('controllerchange', function() {
-            if (refreshing) return;
-            window.location.reload();
-            refreshing = true;
-        });
+h1 {
+    color: #333;
+}
 
-        // Solicitar permiso para notificaciones
-        if ('Notification' in window) {
-            Notification.requestPermission().then(function(result) {
-                if (result === 'granted') {
-                    console.log('Permiso de notificación concedido');
-                }
-            });
-        }
-    </script>
-</body>
-</html>
+.centered {
+    text-align: center;
+}
+
+#task-form {
+    margin-bottom: 20px;
+}
+
+#new-task {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+#priority-buttons {
+    display: flex;
+    justify-content: space-between;
+}
+
+.priority-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#priority-high { background-color: #ff6b6b; }
+#priority-medium { background-color: #feca57; }
+#priority-low { background-color: #48dbfb; }
+
+.task-item {
+    background-color: #fff;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.delete-btn {
+    background-color: #ff6b6b;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.warning {
+    background-color: #ffdddd;
+    border-left: 6px solid #f44336;
+    color: #f44336;
+    margin-top: 20px;
+    padding: 10px;
+    text-align: center;
+    font-weight: bold;
+}
