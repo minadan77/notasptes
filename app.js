@@ -1,10 +1,31 @@
+let db;
+const DB_NAME = 'TasksDB';
+const STORE_NAME = 'tasks';
+
 document.addEventListener('DOMContentLoaded', () => {
     const taskForm = document.getElementById('task-form');
     const newTaskInput = document.getElementById('new-task');
     const taskList = document.getElementById('task-list');
     const priorityButtons = document.querySelectorAll('.priority-btn');
-
     let selectedPriority = null;
+
+    // Inicializar IndexedDB
+    const request = indexedDB.open(DB_NAME, 1);
+
+    request.onerror = (event) => {
+        console.error("Error al abrir la base de datos", event.target.error);
+    };
+
+    request.onsuccess = (event) => {
+        db = event.target.result;
+        loadTasks();
+    };
+
+    request.onupgradeneeded = (event) => {
+        db = event.target.result;
+        const objectStore = db.createObjectStore(STORE_NAME, { keyPath: "id", autoIncrement: true });
+        objectStore.createIndex("priority", "priority", { unique: false });
+    };
 
     priorityButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -16,28 +37,37 @@ document.addEventListener('DOMContentLoaded', () => {
     function addTask() {
         const taskText = newTaskInput.value.trim();
         if (taskText && selectedPriority) {
-            const taskItem = createTaskElement(taskText, selectedPriority);
-            insertTaskInOrder(taskItem);
-            newTaskInput.value = '';
-            selectedPriority = null;
-            saveTasks();
+            const task = { text: taskText, priority: selectedPriority };
+            const transaction = db.transaction([STORE_NAME], "readwrite");
+            const objectStore = transaction.objectStore(STORE_NAME);
+            const request = objectStore.add(task);
+
+            request.onsuccess = () => {
+                newTaskInput.value = '';
+                selectedPriority = null;
+                loadTasks();
+            };
+
+            request.onerror = (event) => {
+                console.error("Error al agregar tarea", event.target.error);
+            };
         }
     }
 
-    function createTaskElement(text, priority) {
+    function createTaskElement(task) {
         const taskItem = document.createElement('div');
         taskItem.classList.add('task-item');
-        taskItem.setAttribute('data-priority', priority);
+        taskItem.setAttribute('data-priority', task.priority);
+        taskItem.setAttribute('data-id', task.id);
         
         const taskText = document.createElement('span');
-        taskText.textContent = text;
+        taskText.textContent = task.text;
         
         const deleteBtn = document.createElement('button');
         deleteBtn.textContent = 'X';
         deleteBtn.classList.add('delete-btn');
         deleteBtn.addEventListener('click', () => {
-            taskList.removeChild(taskItem);
-            saveTasks();
+            deleteTask(task.id);
         });
         
         taskItem.appendChild(taskText);
@@ -46,20 +76,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return taskItem;
     }
 
-    function insertTaskInOrder(taskItem) {
-        const priority = taskItem.getAttribute('data-priority');
-        const tasks = Array.from(taskList.children);
-        
-        const insertIndex = tasks.findIndex(task => {
-            const taskPriority = task.getAttribute('data-priority');
-            return getPriorityOrder(priority) < getPriorityOrder(taskPriority);
-        });
+    function deleteTask(id) {
+        const transaction = db.transaction([STORE_NAME], "readwrite");
+        const objectStore = transaction.objectStore(STORE_NAME);
+        const request = objectStore.delete(id);
 
-        if (insertIndex === -1) {
-            taskList.appendChild(taskItem);
-        } else {
-            taskList.insertBefore(taskItem, tasks[insertIndex]);
-        }
+        request.onsuccess = () => {
+            loadTasks();
+        };
+
+        request.onerror = (event) => {
+            console.error("Error al eliminar tarea", event.target.error);
+        };
     }
 
     function getPriorityOrder(priority) {
@@ -71,22 +99,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function saveTasks() {
-        const tasks = Array.from(taskList.children).map(taskItem => ({
-            text: taskItem.querySelector('span').textContent,
-            priority: taskItem.dataset.priority
-        }));
-        localStorage.setItem('tasks', JSON.stringify(tasks));
-    }
-
     function loadTasks() {
-        const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-        tasks.sort((a, b) => getPriorityOrder(a.priority) - getPriorityOrder(b.priority));
-        tasks.forEach(task => {
-            const taskItem = createTaskElement(task.text, task.priority);
-            taskList.appendChild(taskItem);
-        });
-    }
+        const transaction = db.transaction([STORE_NAME], "readonly");
+        const objectStore = transaction.objectStore(STORE_NAME);
+        const request = objectStore.getAll();
 
-    loadTasks();
+        request.onsuccess = (event) => {
+            const tasks = event.target.result;
+            taskList.innerHTML = '';
+            tasks.sort((a, b) => getPriorityOrder(a.priority) - getPriorityOrder(b.priority));
+            tasks.forEach(task => {
+                const taskItem = createTaskElement(task);
+                taskList.appendChild(taskItem);
+            });
+        };
+
+        request.onerror = (event) => {
+            console.error("Error al cargar tareas", event.target.error);
+        };
+    }
 });
