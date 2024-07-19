@@ -7,7 +7,6 @@ const DB_NAME = 'TasksDB';
 const DB_VERSION = 1;
 const DB_STORE_NAME = 'tasks';
 
-// Abre la base de datos
 function openDb() {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
@@ -23,12 +22,11 @@ function openDb() {
     request.onupgradeneeded = (event) => {
         db = event.target.result;
         if (!db.objectStoreNames.contains(DB_STORE_NAME)) {
-            db.createObjectStore(DB_STORE_NAME, { autoIncrement: true });
+            db.createObjectStore(DB_STORE_NAME, { keyPath: 'id', autoIncrement: true });
         }
     };
 }
 
-// Agrega una tarea a la base de datos
 function addTaskToDb(task) {
     const transaction = db.transaction([DB_STORE_NAME], 'readwrite');
     const store = transaction.objectStore(DB_STORE_NAME);
@@ -36,9 +34,11 @@ function addTaskToDb(task) {
     transaction.onerror = (event) => {
         console.error('Error al agregar la tarea', event);
     };
+    transaction.oncomplete = () => {
+        loadTasks(); // Carga nuevamente las tareas para reflejar el cambio
+    };
 }
 
-// Carga todas las tareas desde la base de datos
 function loadTasks() {
     const transaction = db.transaction([DB_STORE_NAME], 'readonly');
     const store = transaction.objectStore(DB_STORE_NAME);
@@ -54,19 +54,20 @@ function loadTasks() {
     };
 }
 
-// Elimina una tarea de la base de datos
-function deleteTaskFromDb(index) {
+function deleteTaskFromDb(id) {
     const transaction = db.transaction([DB_STORE_NAME], 'readwrite');
     const store = transaction.objectStore(DB_STORE_NAME);
-    store.delete(index);
+    store.delete(id);
     transaction.onerror = (event) => {
         console.error('Error al eliminar la tarea', event);
+    };
+    transaction.oncomplete = () => {
+        loadTasks(); // Carga nuevamente las tareas para reflejar el cambio
     };
 }
 
 let tasks = [];
 
-// Cargar tareas guardadas
 document.addEventListener('DOMContentLoaded', () => {
     openDb();
 });
@@ -79,9 +80,7 @@ function addTask(priority) {
     const taskText = newTaskInput.value.trim();
     if (taskText) {
         const task = { text: taskText, priority: priority };
-        tasks.push(task);
         addTaskToDb(task);
-        renderTasks();
         newTaskInput.value = '';
     }
 }
@@ -89,23 +88,20 @@ function addTask(priority) {
 function renderTasks() {
     taskList.innerHTML = '';
     tasks.sort((a, b) => getPriorityValue(b.priority) - getPriorityValue(a.priority));
-    tasks.forEach((task, index) => {
+    tasks.forEach((task) => {
         const li = document.createElement('li');
         li.className = 'task-item';
         li.dataset.priority = task.priority;
         li.innerHTML = `
             ${task.text}
-            <button class="delete-btn" onclick="deleteTask(${index})">X</button>
+            <button class="delete-btn" onclick="deleteTask(${task.id})">X</button>
         `;
         taskList.appendChild(li);
     });
 }
 
-function deleteTask(index) {
-    const task = tasks[index];
-    tasks.splice(index, 1);
-    deleteTaskFromDb(task.id);
-    renderTasks();
+function deleteTask(id) {
+    deleteTaskFromDb(id);
 }
 
 function getPriorityValue(priority) {
