@@ -1,12 +1,12 @@
 const CACHE_NAME = 'tareas-pendientes-v1';
 const urlsToCache = [
     '/',
-    '/index.html',
-    '/styles.css',
-    '/app.js',
-    '/manifest.json',
-    '/icon-192x192.png',
-    '/icon-512x512.png'
+    '/notasptes/index.html',
+    '/notasptes/styles.css',
+    '/notasptes/app.js',
+    '/notasptes/manifest.json',
+    '/notasptes/icon-192x192.png',
+    '/notasptes/icon-512x512.png'
 ];
 
 self.addEventListener('install', (event) => {
