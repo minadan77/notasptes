@@ -120,7 +120,7 @@ h1 {
     background-color: #000000;
     color: red;
     text-align: center;
-    padding: 10px;
-    font-size: 0.9rem;
+    padding: 5px; /* Ajuste de margen */
+    font-size: 0.8rem; /* Letra muy pequeña */
     border-top: 1px solid #ff0000;
 }
