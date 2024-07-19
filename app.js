@@ -30,12 +30,12 @@ function openDb() {
 function addTaskToDb(task) {
     const transaction = db.transaction([DB_STORE_NAME], 'readwrite');
     const store = transaction.objectStore(DB_STORE_NAME);
-    store.add(task);
+    const request = store.add(task);
+    request.onsuccess = () => {
+        loadTasks(); // Carga nuevamente las tareas para reflejar el cambio
+    };
     transaction.onerror = (event) => {
         console.error('Error al agregar la tarea', event);
-    };
-    transaction.oncomplete = () => {
-        loadTasks(); // Carga nuevamente las tareas para reflejar el cambio
     };
 }
 
@@ -91,17 +91,22 @@ function renderTasks() {
     tasks.forEach((task) => {
         const li = document.createElement('li');
         li.className = 'task-item';
+        li.dataset.id = task.id; // Usar el ID para eliminar la tarea
         li.dataset.priority = task.priority;
         li.innerHTML = `
             ${task.text}
-            <button class="delete-btn" onclick="deleteTask(${task.id})">X</button>
+            <button class="delete-btn" data-id="${task.id}">X</button>
         `;
         taskList.appendChild(li);
     });
-}
 
-function deleteTask(id) {
-    deleteTaskFromDb(id);
+    // Reasignar el manejador de eventos para los botones de eliminación
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', (event) => {
+            const id = parseInt(event.target.dataset.id, 10);
+            deleteTaskFromDb(id);
+        });
+    });
 }
 
 function getPriorityValue(priority) {
