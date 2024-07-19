@@ -2,74 +2,12 @@ const newTaskInput = document.getElementById('new-task');
 const priorityButtons = document.querySelectorAll('.priority-btn');
 const taskList = document.getElementById('task-list');
 
-let db;
-const DB_NAME = 'TasksDB';
-const DB_VERSION = 1;
-const DB_STORE_NAME = 'tasks';
-
-function openDb() {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onerror = (event) => {
-        console.error('Error al abrir la base de datos', event);
-    };
-
-    request.onsuccess = (event) => {
-        db = event.target.result;
-        loadTasks();
-    };
-
-    request.onupgradeneeded = (event) => {
-        db = event.target.result;
-        if (!db.objectStoreNames.contains(DB_STORE_NAME)) {
-            db.createObjectStore(DB_STORE_NAME, { keyPath: 'id', autoIncrement: true });
-        }
-    };
-}
-
-function addTaskToDb(task) {
-    const transaction = db.transaction([DB_STORE_NAME], 'readwrite');
-    const store = transaction.objectStore(DB_STORE_NAME);
-    const request = store.add(task);
-    request.onsuccess = () => {
-        loadTasks(); // Carga nuevamente las tareas para reflejar el cambio
-    };
-    transaction.onerror = (event) => {
-        console.error('Error al agregar la tarea', event);
-    };
-}
-
-function loadTasks() {
-    const transaction = db.transaction([DB_STORE_NAME], 'readonly');
-    const store = transaction.objectStore(DB_STORE_NAME);
-    const request = store.getAll();
-
-    request.onerror = (event) => {
-        console.error('Error al cargar las tareas', event);
-    };
-
-    request.onsuccess = (event) => {
-        tasks = event.target.result;
-        renderTasks();
-    };
-}
-
-function deleteTaskFromDb(id) {
-    const transaction = db.transaction([DB_STORE_NAME], 'readwrite');
-    const store = transaction.objectStore(DB_STORE_NAME);
-    store.delete(id);
-    transaction.onerror = (event) => {
-        console.error('Error al eliminar la tarea', event);
-    };
-    transaction.oncomplete = () => {
-        loadTasks(); // Carga nuevamente las tareas para reflejar el cambio
-    };
-}
-
 let tasks = [];
 
+// Cargar tareas guardadas
 document.addEventListener('DOMContentLoaded', () => {
-    openDb();
+    loadTasks();
+    renderTasks();
 });
 
 priorityButtons.forEach(button => {
@@ -80,7 +18,9 @@ function addTask(priority) {
     const taskText = newTaskInput.value.trim();
     if (taskText) {
         const task = { text: taskText, priority: priority };
-        addTaskToDb(task);
+        tasks.push(task);
+        saveTasks();
+        renderTasks();
         newTaskInput.value = '';
     }
 }
@@ -88,25 +28,22 @@ function addTask(priority) {
 function renderTasks() {
     taskList.innerHTML = '';
     tasks.sort((a, b) => getPriorityValue(b.priority) - getPriorityValue(a.priority));
-    tasks.forEach((task) => {
+    tasks.forEach((task, index) => {
         const li = document.createElement('li');
         li.className = 'task-item';
-        li.dataset.id = task.id; // Usar el ID para eliminar la tarea
         li.dataset.priority = task.priority;
         li.innerHTML = `
             ${task.text}
-            <button class="delete-btn" data-id="${task.id}">X</button>
+            <button class="delete-btn" onclick="deleteTask(${index})">X</button>
         `;
         taskList.appendChild(li);
     });
+}
 
-    // Reasignar el manejador de eventos para los botones de eliminación
-    document.querySelectorAll('.delete-btn').forEach(button => {
-        button.addEventListener('click', (event) => {
-            const id = parseInt(event.target.dataset.id, 10);
-            deleteTaskFromDb(id);
-        });
-    });
+function deleteTask(index) {
+    tasks.splice(index, 1);
+    saveTasks();
+    renderTasks();
 }
 
 function getPriorityValue(priority) {
@@ -117,3 +54,52 @@ function getPriorityValue(priority) {
         default: return 0;
     }
 }
+
+function saveTasks() {
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+
+function loadTasks() {
+    const savedTasks = localStorage.getItem('tasks');
+    if (savedTasks) {
+        tasks = JSON.parse(savedTasks);
+    }
+}
+
+// Manejo del evento de instalación
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault(); // Evita que el navegador muestre el banner de instalación automáticamente
+    deferredPrompt = e; // Guarda el evento para mostrarlo más tarde
+    showInstallBanner();
+});
+
+function showInstallBanner() {
+    // Crear y mostrar un banner personalizado para la instalación
+    const installBanner = document.createElement('div');
+    installBanner.id = 'install-banner';
+    installBanner.innerHTML = `
+        <p style="color: red; font-size: 0.75rem;">¡Si se borra el caché del navegador se perderán las notas!</p>
+        <button id="install-btn">Instalar</button>
+    `;
+    document.body.appendChild(installBanner);
+
+    document.getElementById('install-btn').addEventListener('click', () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt(); // Muestra el diálogo de instalación
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('Usuario aceptó la instalación de la PWA');
+                } else {
+                    console.log('Usuario rechazó la instalación de la PWA');
+                }
+                deferredPrompt = null; // Elimina el evento guardado
+            });
+        }
+    });
+}
+
+window.addEventListener('appinstalled', () => {
+    console.log('PWA instalada');
+});
