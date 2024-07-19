@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#1a237e">
+    <meta name="description" content="Aplicación para gestionar tareas pendientes">
     <title>Tareas Pendientes</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icon-192x192.png" type="image/png">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
 </head>
 <body>
     <header>
@@ -28,7 +30,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
+                navigator.serviceWorker.register('/service-worker.js', {scope: '/'})
                     .then(registration => {
                         console.log('Service Worker registrado con éxito:', registration.scope);
                     })
