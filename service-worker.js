@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tareas-pendientes-v1';
+const CACHE_NAME = 'notasptes-v1';
 const urlsToCache = [
     '/',
     '/notasptes/index.html',
