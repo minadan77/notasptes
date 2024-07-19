@@ -58,7 +58,7 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Agrega un evento para manejar la actualización de la caché
+// Manejo de mensajes para la actualización de caché
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
