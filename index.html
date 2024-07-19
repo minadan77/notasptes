@@ -19,26 +19,13 @@
         <div id="task-input">
             <input type="text" id="new-task" placeholder="Nueva tarea...">
             <div id="priority-buttons">
-                <button class="priority-btn" data-priority="high"></button>
-                <button class="priority-btn" data-priority="medium"></button>
-                <button class="priority-btn" data-priority="low"></button>
+                <button class="priority-btn" data-priority="high">Alta</button>
+                <button class="priority-btn" data-priority="medium">Media</button>
+                <button class="priority-btn" data-priority="low">Baja</button>
             </div>
         </div>
         <ul id="task-list"></ul>
     </main>
     <script src="app.js"></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./service-worker.js')
-                    .then(registration => {
-                        console.log('Service Worker registrado con éxito:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.error('Error al registrar el Service Worker:', error);
-                    });
-            });
-        }
-    </script>
 </body>
 </html>
