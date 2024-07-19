@@ -2,12 +2,73 @@ const newTaskInput = document.getElementById('new-task');
 const priorityButtons = document.querySelectorAll('.priority-btn');
 const taskList = document.getElementById('task-list');
 
+let db;
+const DB_NAME = 'TasksDB';
+const DB_VERSION = 1;
+const DB_STORE_NAME = 'tasks';
+
+// Abre la base de datos
+function openDb() {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onerror = (event) => {
+        console.error('Error al abrir la base de datos', event);
+    };
+
+    request.onsuccess = (event) => {
+        db = event.target.result;
+        loadTasks();
+    };
+
+    request.onupgradeneeded = (event) => {
+        db = event.target.result;
+        if (!db.objectStoreNames.contains(DB_STORE_NAME)) {
+            db.createObjectStore(DB_STORE_NAME, { autoIncrement: true });
+        }
+    };
+}
+
+// Agrega una tarea a la base de datos
+function addTaskToDb(task) {
+    const transaction = db.transaction([DB_STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(DB_STORE_NAME);
+    store.add(task);
+    transaction.onerror = (event) => {
+        console.error('Error al agregar la tarea', event);
+    };
+}
+
+// Carga todas las tareas desde la base de datos
+function loadTasks() {
+    const transaction = db.transaction([DB_STORE_NAME], 'readonly');
+    const store = transaction.objectStore(DB_STORE_NAME);
+    const request = store.getAll();
+
+    request.onerror = (event) => {
+        console.error('Error al cargar las tareas', event);
+    };
+
+    request.onsuccess = (event) => {
+        tasks = event.target.result;
+        renderTasks();
+    };
+}
+
+// Elimina una tarea de la base de datos
+function deleteTaskFromDb(index) {
+    const transaction = db.transaction([DB_STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(DB_STORE_NAME);
+    store.delete(index);
+    transaction.onerror = (event) => {
+        console.error('Error al eliminar la tarea', event);
+    };
+}
+
 let tasks = [];
 
 // Cargar tareas guardadas
 document.addEventListener('DOMContentLoaded', () => {
-    loadTasks();
-    renderTasks();
+    openDb();
 });
 
 priorityButtons.forEach(button => {
@@ -19,7 +80,7 @@ function addTask(priority) {
     if (taskText) {
         const task = { text: taskText, priority: priority };
         tasks.push(task);
-        saveTasks();
+        addTaskToDb(task);
         renderTasks();
         newTaskInput.value = '';
     }
@@ -41,8 +102,9 @@ function renderTasks() {
 }
 
 function deleteTask(index) {
+    const task = tasks[index];
     tasks.splice(index, 1);
-    saveTasks();
+    deleteTaskFromDb(task.id);
     renderTasks();
 }
 
@@ -53,28 +115,4 @@ function getPriorityValue(priority) {
         case 'low': return 1;
         default: return 0;
     }
-}
-
-function saveTasks() {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-}
-
-function loadTasks() {
-    const savedTasks = localStorage.getItem('tasks');
-    if (savedTasks) {
-        tasks = JSON.parse(savedTasks);
-    }
-}
-
-// Registrar el Service Worker
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js')
-            .then(registration => {
-                console.log('Service Worker registrado con éxito:', registration.scope);
-            })
-            .catch(error => {
-                console.error('Error al registrar el Service Worker:', error);
-            });
-    });
 }
